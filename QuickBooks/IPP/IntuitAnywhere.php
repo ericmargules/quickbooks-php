@@ -278,11 +278,23 @@ class QuickBooks_IPP_IntuitAnywhere
 	public function expiry($app_username, $app_tenant, $within = 2592000)
 	{
 		$lifetime = 15552000;
-
-		if ($arr = $this->_driver->oauthLoad($this->_key, $app_username, $app_tenant) and
+	
+		if (
+			// OAuth V1 
+			($this->_oauth_version == self::OAUTH_V1 and
+			$arr = $this->_driver->oauthLoadV1($this->_key, $app_username, $app_tenant) and
 			strlen($arr['oauth_access_token']) > 0 and
 			strlen($arr['oauth_access_token_secret']) > 0)
+
+			or 
+			// OAuth v2
+			($this->_oauth_version == self::OAUTH_V2 and 
+			$arr = $this->_driver->oauthLoadV2($this->_key, $app_tenant) and
+			strlen($arr['oauth_access_token']) > 0 and
+			strlen($arr['oauth_refresh_token']) > 0)
+		)
 		{
+
 			$expires = $lifetime + strtotime($arr['access_datetime']);
 
 			$diff = $expires - time();
@@ -302,7 +314,7 @@ class QuickBooks_IPP_IntuitAnywhere
 
 		return QuickBooks_IPP_IntuitAnywhere::EXPIRY_UNKNOWN;
 	}
-
+	
 	/**
 	 * Reconnect/refresh the OAuth tokens
 	 *
